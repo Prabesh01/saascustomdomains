@@ -74,12 +74,12 @@ def upstreams():
     upstreams = g.user.upstreams
     return render_template('upstreams.html', upstreams=upstreams)
 
-@views.post('/delete_upstream/<upstream_id>')
+@views.post('/delete_upstream/<domain>')
 @login_required
-def delete_upstream(upstream_id):
-    upstream = Upstream.query.filter_by(id=upstream_id, user=g.user).first_or_404()
+def delete_upstream(domain):
+    upstream = Upstream.query.filter_by(domain=domain, user=g.user).first_or_404()
 
-    Domain.query.filter_by(upstream_id=upstream_id).delete()
+    Domain.query.filter_by(upstream_domain=domain).delete()
     db.session.delete(upstream)
     db.session.commit()
 
@@ -91,14 +91,14 @@ def logout():
     session.clear()
     return redirect(url_for('views.login'))
 
-@views.route('/upstream/<upstream_id>',methods=['GET', 'POST'])
+@views.route('/upstream/<upstream_domain>',methods=['GET', 'POST'])
 @login_required
-def domains(upstream_id):
-    upstream = Upstream.query.filter_by(id=upstream_id, user=g.user).first_or_404()
+def domains(upstream_domain):
+    upstream = Upstream.query.filter_by(domain=upstream_domain, user=g.user).first_or_404()
 
     if request.method == 'POST':
         domain = request.form['domain']
-        if Domain.query.filter_by(domain=domain,upstream=upstream).first():
+        if Upstream.query.filter_by(domain=domain,upstream=upstream).first():
             flash('Domain already exists in the upstream', 'error')
         else:
             new_domain = Domain(
@@ -114,9 +114,9 @@ def domains(upstream_id):
 
 @views.post('/delete_domain/<domain_id>')
 @login_required
-def delete_domain(domain_id):
+def delete_upst(domain_id):
     domain = Domain.query.get_or_404(domain_id)
-    upstream_id=domain.upstream.id
+
     if domain.upstream.user != g.user:
         flash('Unauthorized to delete this domain.', 'error')
         return redirect(url_for('views.domains'))
@@ -125,4 +125,4 @@ def delete_domain(domain_id):
     db.session.commit()
 
     flash('Domain deleted successfully.', 'success')
-    return redirect(url_for('views.domains',upstream_id=upstream_id))
+    return redirect(url_for('views.domains'))

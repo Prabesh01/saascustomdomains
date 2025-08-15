@@ -18,7 +18,7 @@ class User(db.Model):
 
 class Upstream(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), db.ForeignKey('user.username'), nullable=False)
+    user_username = db.Column(db.String(50), db.ForeignKey('user.username'), nullable=False)
     user = db.relationship('User', backref=db.backref('upstreams', lazy=True))
     domain = db.Column(db.String(100), nullable=False)
     secret = db.Column(db.String(50), nullable=False, unique=True)
@@ -29,7 +29,8 @@ class Upstream(db.Model):
 
 class Domain(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    upstream = db.Column(db.String(100), db.ForeignKey('upstream.domain'), nullable=False)
+    upstream_id = db.Column(db.String(100), db.ForeignKey('upstream.id'), nullable=False)
+    upstream = db.relationship('Upstream', backref=db.backref('domains', lazy=True))
     domain = db.Column(db.String(50), nullable=False)
 
     def save_to_db(self):
