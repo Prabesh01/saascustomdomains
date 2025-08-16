@@ -13,6 +13,7 @@
             <a href="{{ url_for('views.upstreams') }}" class="text-xl font-bold">saascustomdomains</a>
             <div>
                 <span class="mr-4">Hello, {{ session['user'] }}</span>
+                <a href="{{ url_for('views.docs') }}" class="hover:underline">API Docs</a>
                 <a href="{{ url_for('views.logout') }}" class="hover:underline">Logout</a>
             </div>
         </div>

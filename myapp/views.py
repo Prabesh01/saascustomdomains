@@ -1,9 +1,8 @@
-from flask import Blueprint, render_template, request, url_for, redirect, session, g, flash
+from flask import Blueprint, render_template, request, url_for, redirect, session, g, flash, jsonify
 from functools import wraps
 from myapp.database import *
 
 import secrets
-
 
 views = Blueprint('views', __name__, static_folder='static', template_folder='templates')
 
@@ -22,6 +21,21 @@ def login_required(f):
         return f( **kwargs)
 
     return wrapped_view
+
+def api_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        api_key = request.headers.get('X-API-KEY') or request.args.get('api_key')
+        if not api_key:
+            return jsonify({'error': 'API key is required','status':400}), 400
+
+        upstream = Upstream.query.filter_by(secret=api_key).first()
+        if not upstream:
+            return jsonify({'error': 'Invalid API key provided','status':404}), 404
+
+        g.upstream = upstream
+        return f(*args, **kwargs)
+    return decorated
 
 
 @views.route('/login',methods=["GET", "POST"])
@@ -91,38 +105,58 @@ def logout():
     session.clear()
     return redirect(url_for('views.login'))
 
+@views.get('/api')
+@api_auth
+def test_api():
+    return jsonify({'message':'OK','status':200}), 200
+
 @views.route('/upstream/<upstream_id>',methods=['GET', 'POST'])
 @login_required
 def domains(upstream_id):
     upstream = Upstream.query.filter_by(id=upstream_id, user=g.user).first_or_404()
+    return render_template('domains.html', upstream=upstream, host=request.host)
 
-    if request.method == 'POST':
-        domain = request.form['domain']
-        if Domain.query.filter_by(domain=domain,upstream=upstream).first():
-            flash('Domain already exists in the upstream', 'error')
-        else:
-            new_domain = Domain(
-                upstream=upstream,
-                domain=domain,
-            )
-            db.session.add(new_domain)
-            db.session.commit()
-            flash('Domain added successfully', 'success')
+@views.route('/api/domains',methods=['GET'])
+@api_auth
+def list_domains():
+    domains = [d.domain for d in g.upstream.domains]
+    return jsonify(domains)
 
-    domains = upstream.domains
-    return render_template('domains.html', upstream=upstream, domains=domains)
+@views.route('/api/domains',methods=['POST'])
+@api_auth
+def add_domain():
+    domain = request.get_json().get('domain')
+    if not domain:
+        return jsonify({'error': 'Domain is required','status':400}), 400
 
-@views.post('/delete_domain/<domain_id>')
-@login_required
-def delete_domain(domain_id):
-    domain = Domain.query.get_or_404(domain_id)
-    upstream_id=domain.upstream.id
-    if domain.upstream.user != g.user:
-        flash('Unauthorized to delete this domain.', 'error')
-        return redirect(url_for('views.domains'))
+    if Domain.query.filter_by(domain=domain,upstream=g.upstream).first():
+        return jsonify({'error': 'Domain already exists','status':409}), 409
+    new_domain = Domain(
+        upstream=g.upstream,
+        domain=domain,
+    )
+    db.session.add(new_domain)
+    db.session.commit()
+    return jsonify({'message':'added successfully','status':200}), 200
+
+
+@views.route('/api/domains',methods=['DELETE'])
+@api_auth
+def delete_domain():
+    domain = request.get_json().get('domain')
+    if not domain:
+        return jsonify({'error': 'Domain is required','status':400}), 400
+
+    domain = Domain.query.filter_by(domain=domain,upstream=g.upstream).first()
+    if not domain:
+        return jsonify({'error': 'Domain not found','status':404}), 404
 
     db.session.delete(domain)
     db.session.commit()
 
-    flash('Domain deleted successfully.', 'success')
-    return redirect(url_for('views.domains',upstream_id=upstream_id))
+    return jsonify({'message': 'Domain deleted','status':200}), 200
+
+
+@views.get('/docs')
+def docs():
+    return render_template('docs.html')

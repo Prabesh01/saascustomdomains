@@ -1,0 +1,259 @@
+<title>API Documentation</title>
+<style>
+:root{font-family:sans-serif;}
+main{width:50%;margin:0 auto;}
+section.endpoint-card {
+    padding: 1rem 2rem;
+    border-top: 2px #AAA solid;
+    border-bottom: 2px #AAA solid;
+}
+
+section.endpoint-card header{
+    padding-bottom: 1rem;
+    border-bottom:1px #222 solid;
+}
+
+section.endpoint-card header h2{height: 2rem;}
+
+section.endpoint-card.request-POST header h2::before {
+    content: "POST";
+    color:#D22;
+    margin-right:0.5rem;
+    padding:0 0.5rem 0 0;
+    font-weight:normal;
+    border-right:solid 2px #D22;
+}
+
+section.endpoint-card.request-GET header h2::before {
+    content: "GET";
+    color:#D22;
+    margin-right:0.5rem;
+    padding:0 0.5rem 0 0;
+    font-weight:normal;
+    border-right:solid 2px #D22;
+}
+
+
+section.endpoint-card.request-DELETE header h2::before {
+    content: "DELETE";
+    color:#D22;
+    margin-right:0.5rem;
+    padding:0 0.5rem 0 0;
+    font-weight:normal;
+    border-right:solid 2px #D22;
+}
+
+
+section.endpoint-card p{
+    text-indent:2rem;
+}
+
+section.endpoint-card header p{
+    font-size:1rem;
+    font-weight:normal;
+    padding-top:.5rem;
+}
+
+section.endpoint-card header pre{
+    height: 1.6rem;
+    padding: 0.4rem 0;
+    border:1px solid #ddd;
+    font-family:monospace;
+    font-size: .8rem;
+    line-height: 1.6rem;
+    text-indent:2rem;
+}
+
+section.endpoint-card table.param-table{
+    width:100%;
+}
+section.endpoint-card table.param-table tr{
+    height: 2rem;
+    line-height: 2rem;
+}
+section.endpoint-card table.param-table tr th:first-child{
+    text-align:right;
+    padding-right:0.5rem;
+    padding-left:0;
+    border-right:1px solid #222;
+}
+section.endpoint-card table.param-table tr th{
+    text-align:left;
+    padding-left:0.5rem;
+}
+section.endpoint-card table.param-table th ~ td{
+    padding-left:0.5rem;
+}
+section.endpoint-card table.param-table td pre{
+    display:inline-block;
+}
+
+section.endpoint-card h3{
+    margin: 1rem 0 0.5rem;
+}
+section.endpoint-card pre.example{
+    background-color:#222;
+    color:white;
+    padding:0.5rem 0.5rem 0.5rem 1rem;
+    white-space:pre-wrap;
+    font-size:0.7rem;
+    margin:.5rem 0;
+}
+section.endpoint-card h4{
+    margin:.5rem 0;
+}
+</style>
+<main>
+  <section class="endpoint-card request-GET">
+    <header>
+      <h2>Base API</h2>
+      <pre>/api</pre>
+    </header>
+    <h3>Authentication</h3>
+    <p>Use either of the following</p>
+    <table class="param-table">
+      <tr>
+        <th>
+          Field
+        </th>
+        <th>
+          Description
+        </th>
+        <th>
+          Type
+        </th>
+      </tr>
+      <tr>
+        <th>
+          api_key
+        </th>
+        <td>
+          API Key of the upstream
+        </td>
+        <td>
+          GET Parameter
+        </td>
+      </tr>
+      <tr>
+        <th>
+          X-API-KEY
+        </th>
+        <td>
+            API Key of the upstream
+        </td>
+        <td>
+          Header
+        </td>
+      </tr>
+    </table>
+    <h3>Example Request</h3>
+    <pre class="example">curl 'https://example.com/api'</pre>
+    <h4>Response:</h4>
+    <p>API key is valid</p>
+    <pre class="example">{'message':'OK','status':200}</pre>
+    <p>API key is not passed</p>
+    <pre class="example">{'error': 'API key is required','status':400}</pre>
+    <p>Incorrect API key passed</p>
+    <pre class="example">{'error': 'Invalid API key provided','status':404}</pre>
+
+  </section>
+
+  <section class="endpoint-card request-GET">
+    <header>
+      <h2>Get Domains</h2>
+      <pre>/api/domains</pre>
+      <p>get a json list of domains associated with an upstream</p>
+    </header>
+    <h3>Example Request</h3>
+    <pre class="example">curl 'https://example.com/api/domains'</pre>
+    <h4>Response:</h4>
+    <pre class="example">['domain1.com','domain2.com']</pre>
+  </section>
+
+
+  <section class="endpoint-card request-POST">
+    <header>
+      <h2>Add Domain</h2>
+      <pre>/api/domains</pre>
+      <p>add a domain to a upstream</p>
+    </header>
+    <h3>Parameters</h3>
+    <table class="param-table">
+      <tr>
+        <th>
+          Field
+        </th>
+        <th>
+          Description
+        </th>
+        <th>
+          Format
+        </th>
+      </tr>
+      <tr>
+        <th>
+          domain
+        </th>
+        <td>
+          Domain name to be added to a upstream
+        </td>
+        <td>JSON Payload</td>
+      </tr>
+      </tr>
+    </table>
+    <h3>Example Request</h3>
+    <pre class="example">curl - X POST 'https://example.com/api/domains' -H "Content-Type: application/json" -d '{"domain": "domain.com"}'</pre>
+    <h4>Response:</h4>
+    <p>Successfully added the domain</p>
+    <pre class="example">{'message':'added successfully','status':200}</pre>
+    <p>Domain not passed in request body</p>
+    <pre class="example">{'error': 'Domain is required','status':400}</pre>
+    <p>Domain already exists in the upstream</p>
+    <pre class="example">{'error': 'Domain already exists','status':409}</pre>
+
+  </section>
+
+  <section class="endpoint-card request-DELETE">
+    <header>
+      <h2>Delete Domain</h2>
+      <pre>/api/domains</pre>
+      <p>delete a domain from a upstream</p>
+    </header>
+    <h3>Parameters</h3>
+    <table class="param-table">
+      <tr>
+        <th>
+          Field
+        </th>
+        <th>
+          Description
+        </th>
+        <th>
+          Format
+        </th>
+      </tr>
+      <tr>
+        <th>
+          domain
+        </th>
+        <td>
+          Domain name to be removed from a upstream
+        </td>
+        <td>JSON Payload</td>
+      </tr>
+      </tr>
+    </table>
+    <h3>Example Request</h3>
+    <pre class="example">curl - X DELETE 'https://example.com/api/domains' -H "Content-Type: application/json" -d '{"domain": "domain.com"}'</pre>
+    <h4>Response:</h4>
+    <p>Successfully deleted the domain</p>
+    <pre class="example">{'message':'Domain deleted','status':200}</pre>
+    <p>Domain not passed in request body</p>
+    <pre class="example">{'error': 'Domain is required','status':400}</pre>
+    <p>Domain doesn't exists in the upstream</p>
+    <pre class="example">{'error': 'Domain not found','status':404}</pre>
+
+  </section>
+
+
+</main>

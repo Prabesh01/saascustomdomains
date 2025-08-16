@@ -2,10 +2,10 @@
 
 {% block content %}
     <div class="mb-6">
-        <h1 class="text-2xl font-bold">{{ upstream.domain }}</h1>
+        <h1 class="text-2xl font-bold">These domains will be directed to {{ upstream.domain }}</h1>
         <p class="text-gray-600 mt-2">
-            <span class="font-semibold">API Key:</span> 
-            <span id="secret">{{ upstream.secret }}</span>
+            <span class="font-semibold">Make sure these domains have CNAME set to:</span> 
+            <span id="secret">{{ session['user'] }}.{{ host }}</span>
             <button onclick="toggleSecret()" class="ml-2 text-blue-600 hover:text-blue-800">
                 <i class="fas fa-eye-slash"></i>
             </button>
@@ -21,7 +21,6 @@
 
         <!-- Add Upstream Form (Initially Hidden) -->
 <div id="upstreamForm" class="hidden mb-6 bg-gray-50 p-4 rounded-md">
-    <form method="POST" action="" class="space-y-4">
         <!-- Container for input and buttons side by side -->
         <div class="flex items-end space-x-4">
             <!-- Domain input -->
@@ -37,17 +36,15 @@
                     class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">
                     Cancel
                 </button>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-                    Save
+                <button onclick="addDomain()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                    Add
                 </button>
             </div>
         </div>
-    </form>
 </div>
 
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        {% if domains %}
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -56,26 +53,11 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                {% for domain in domains %}
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ domain.domain }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button onclick="confirmDelete('{{ url_for('views.delete_domain', domain_id=domain.id) }}')" class="text-red-600 hover:text-red-800">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
             </tbody>
         </table>
-        {% else %}
-        <div class="p-6 text-center text-gray-500">No domains found for this upstream</div>
-        {% endif %}
     </div>
 
     <script>
-        let secretVisible = true;
-
     // Toggle Upstream Form
     function toggleUpstreamForm() {
         const form = document.getElementById('upstreamForm');
@@ -83,34 +65,105 @@
 
         // Reset form when showing
         if (!form.classList.contains('hidden')) {
-            document.getElementById('upstreamAction').value = 'add';
-            document.getElementById('upstreamId').value = '';
             document.getElementById('domain').value = '';
-            document.getElementById('secret').value = '';
         }
     }
 
-        
-        function toggleSecret() {
-            const element = document.getElementById('secret');
-            const buttonIcon = document.querySelector('button i');
-            
-            if (secretVisible) {
-                element.textContent = '••••••••••••';
-                buttonIcon.classList.remove('fa-eye-slash');
-                buttonIcon.classList.add('fa-eye');
-            } else {
-                element.textContent = '{{ upstream.secret }}';
-                buttonIcon.classList.remove('fa-eye');
-                buttonIcon.classList.add('fa-eye-slash');
-            }
-            
-            secretVisible = !secretVisible;
-        }
-        
-        // Initially hide the secret
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleSecret();
-        });
     </script>
+<script>
+const apiBaseUrl = '/api/domains';
+const apiKey = '{{ upstream.secret }}'; 
+
+// Function to fetch and display domains
+function loadDomains() {
+    fetch(apiBaseUrl, {
+        headers: {
+            'X-API-KEY': apiKey,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.querySelector('tbody');
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-gray-500">No domains found for this upstream</td></tr>';
+            return;
+        }
+
+        data.forEach(domain => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">${domain}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <button onclick="deleteDomain('${domain}')" class="text-red-600 hover:text-red-800">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    })
+    .catch(err => console.error('Error fetching domains:', err));
+}
+
+// Function to add a new domain
+function addDomain() {
+    const domainInput = document.getElementById('domain');
+    const domainName = domainInput.value.trim();
+
+    if (!domainName) {
+        alert('Please enter a domain name.');
+        return;
+    }
+
+    fetch(apiBaseUrl, {
+        method: 'POST',
+        headers: {
+            'X-API-KEY': apiKey,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ domain: domainName })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            domainInput.value = '';
+            loadDomains();
+        }
+    })
+    .catch(err => console.error('Error adding domain:', err));
+}
+
+// Function to delete a domain
+function deleteDomain(domain) {
+    fetch(apiBaseUrl, {
+        method: 'DELETE',
+        headers: {
+            'X-API-KEY': apiKey,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ domain: domain })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            loadDomains();
+        }
+    })
+    .catch(err => console.error('Error deleting domain:', err));
+}
+
+// Call loadDomains on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadDomains();
+});
+</script>
+
 {% endblock %}
