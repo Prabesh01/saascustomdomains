@@ -150,8 +150,8 @@ def add_domain():
         return jsonify({'error': 'Domain already exists','status':409}), 409
 
     cname_check = add_caddy(session['user']+'.'+request.host, domain, g.upstream.domain)
-    if not cname_check:
-        return jsonify({'error': 'Required CNAME is not set. Please try again later.','status':400}), 400
+    if cname_check:
+        return jsonify({'error': cname_check,'status':400}), 400
 
     new_domain = Domain(
         upstream=g.upstream,
@@ -187,8 +187,10 @@ def docs():
     return render_template('docs.html',host=request.host)
 
 def add_caddy(cname, domain,upstream):
-    cnames=resolver.query(domain,"CNAME")
-    if not any(r.target.to_text().rstrip(".") == cname for r in cnames): return False
+    try: cnames=resolver.resolve(domain,"CNAME")
+    except resolver.NXDOMAIN: return 'Invalid Domain Name'
+    except: return "No CNAME record found in the domain. Please add and try again"
+    if not any(r.target.to_text().rstrip(".") == cname for r in cnames): return "Required CNAME is not set. Please try again later."
     remove_caddy(domain)
     route_data = {
         "match": [{"host": [domain]}],
@@ -202,7 +204,7 @@ def add_caddy(cname, domain,upstream):
     }
     requests.post(f"{caddy_api}/config/apps/http/servers/srv0/routes", json=route_data)
 
-    return True
+    return False
 
 def remove_caddy(domain):
     routes=requests.get(f"{caddy_api}/config/apps/http/servers/srv0/routes").json()
