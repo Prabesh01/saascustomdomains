@@ -141,23 +141,36 @@ function addDomain() {
 
 // Function to delete a domain
 function deleteDomain(domain) {
-    fetch(apiBaseUrl, {
-        method: 'DELETE',
-        headers: {
-            'X-API-KEY': apiKey,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ domain: domain })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            loadDomains();
-        }
-    })
-    .catch(err => console.error('Error deleting domain:', err));
+        Swal.fire({
+            title: 'Are you sure?',
+            text:  "Delete this domain from the upstream?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(apiBaseUrl, {
+                    method: 'DELETE',
+                    headers: {
+                    'X-API-KEY': apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ domain: domain })
+                })
+                .then(res => res.json())
+                .then(data => {
+                     if (data.error) {
+                         alert(data.error);
+                     } else {
+                         loadDomains();
+                     }
+                 })
+                 .catch(err => console.error('Error deleting domain:', err));
+            }
+        });
+
 }
 
 // Call loadDomains on page load
