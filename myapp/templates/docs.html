@@ -1,4 +1,6 @@
 <title>API Documentation</title>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
 <style>
 :root{font-family:sans-serif;}
 main{width:50%;margin:0 auto;}
@@ -102,7 +104,28 @@ section.endpoint-card pre.example{
 section.endpoint-card h4{
     margin:.5rem 0;
 }
+
+.fa-home {
+  position: fixed;
+  background: #fff;
+  padding: 13px;
+  border-radius: 100%;
+  font-size: 1.5rem;
+  color: #000;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+  animation: moveLeft 0.2s forwards;
+}
+
+@keyframes moveLeft {
+  from {
+    transform: translate(10px); 
+  }
+  to {
+    transform: translate(0);
+  }
+}
 </style>
+<a href="/"><i class="fas fa-home"></i></a>
 <main>
   <section class="endpoint-card request-GET">
     <header>
