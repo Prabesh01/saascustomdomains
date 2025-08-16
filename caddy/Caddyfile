@@ -1,0 +1,15 @@
+{
+	email developer@saascustomdomains.com
+	admin localhost:2015
+}
+
+
+saascustomdomains, *.saascustomdomains {
+	tls {
+	dns cloudflare xxx
+	}
+
+	reverse_proxy {
+	to localhost:8282
+	}
+}

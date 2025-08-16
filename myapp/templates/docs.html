@@ -147,7 +147,7 @@ section.endpoint-card h4{
       </tr>
     </table>
     <h3>Example Request</h3>
-    <pre class="example">curl 'https://example.com/api'</pre>
+    <pre class="example">curl 'https://{{host}}/api?api_key=XXX'</pre>
     <h4>Response:</h4>
     <p>API key is valid</p>
     <pre class="example">{'message':'OK','status':200}</pre>
@@ -165,7 +165,7 @@ section.endpoint-card h4{
       <p>get a json list of domains associated with an upstream</p>
     </header>
     <h3>Example Request</h3>
-    <pre class="example">curl 'https://example.com/api/domains'</pre>
+    <pre class="example">curl 'https://{{host}}/api/domains'</pre>
     <h4>Response:</h4>
     <pre class="example">['domain1.com','domain2.com']</pre>
   </section>
@@ -202,7 +202,7 @@ section.endpoint-card h4{
       </tr>
     </table>
     <h3>Example Request</h3>
-    <pre class="example">curl - X POST 'https://example.com/api/domains' -H "Content-Type: application/json" -d '{"domain": "domain.com"}'</pre>
+    <pre class="example">curl - X POST 'https://{{host}}/api/domains' -H "Content-Type: application/json" -d '{"domain": "domain.com"}'</pre>
     <h4>Response:</h4>
     <p>Successfully added the domain</p>
     <pre class="example">{'message':'added successfully','status':200}</pre>
@@ -244,7 +244,7 @@ section.endpoint-card h4{
       </tr>
     </table>
     <h3>Example Request</h3>
-    <pre class="example">curl - X DELETE 'https://example.com/api/domains' -H "Content-Type: application/json" -d '{"domain": "domain.com"}'</pre>
+    <pre class="example">curl - X DELETE 'https://{{host}}/api/domains' -H "Content-Type: application/json" -d '{"domain": "domain.com"}'</pre>
     <h4>Response:</h4>
     <p>Successfully deleted the domain</p>
     <pre class="example">{'message':'Domain deleted','status':200}</pre>

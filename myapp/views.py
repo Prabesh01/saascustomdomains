@@ -1,10 +1,22 @@
-from flask import Blueprint, render_template, request, url_for, redirect, session, g, flash, jsonify
+from flask import Blueprint, render_template, request, url_for, redirect, session, g, flash, jsonify, Response
 from functools import wraps
 from myapp.database import *
 
 import secrets
 
+import requests
+import os, json
+
+script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(script_dir, '.env')
+
+from dotenv import load_dotenv
+load_dotenv(env_path)
+
+from dns import resolver
+
 views = Blueprint('views', __name__, static_folder='static', template_folder='templates')
+caddy_api=os.getenv('caddy_api')
 
 def login_required(f):
     @wraps(f)
@@ -64,7 +76,12 @@ def login():
     db.session.add(new_user)
     db.session.commit()
 
-    session["user"] = new_user.username
+    r=requests.post(f"https://api.cloudflare.com/client/v4/zones/{os.getenv('cf_zone_id')}/dns_records", headers={"Authorization":f"Bearer {os.getenv('cf_api_key')}"}, json={"type":"CNAME","name":new_user.username,"content":request.host,"ttl": 3600,"proxied": False})
+    if r.status_code!=200:
+        db.session.delete(new_user)
+        db.session.commit()
+    else: session["user"] = new_user.username
+
     return redirect(url_for("views.upstreams"))
 
 
@@ -72,7 +89,7 @@ def login():
 @login_required
 def upstreams():
     if request.method == 'POST':
-        domain = request.form['domain']
+        domain = request.form['domain'].lower()
         if Upstream.query.filter_by(domain=domain,user=g.user).first():
             flash('Upstream already exists', 'error')
         else:
@@ -125,18 +142,24 @@ def list_domains():
 @views.route('/api/domains',methods=['POST'])
 @api_auth
 def add_domain():
-    domain = request.get_json().get('domain')
+    domain = request.get_json().get('domain').lower()
     if not domain:
         return jsonify({'error': 'Domain is required','status':400}), 400
 
     if Domain.query.filter_by(domain=domain,upstream=g.upstream).first():
         return jsonify({'error': 'Domain already exists','status':409}), 409
+
+    cname_check = add_caddy(session['user']+'.'+request.host, domain, g.upstream.domain)
+    if not cname_check:
+        return jsonify({'error': 'Required CNAME is not set. Please try again later.','status':400}), 400
+
     new_domain = Domain(
         upstream=g.upstream,
         domain=domain,
     )
     db.session.add(new_domain)
     db.session.commit()
+
     return jsonify({'message':'added successfully','status':200}), 200
 
 
@@ -154,9 +177,37 @@ def delete_domain():
     db.session.delete(domain)
     db.session.commit()
 
+    remove_caddy(domain.domain)
+
     return jsonify({'message': 'Domain deleted','status':200}), 200
 
 
 @views.get('/docs')
 def docs():
-    return render_template('docs.html')
+    return render_template('docs.html',host=request.host)
+
+def add_caddy(cname, domain,upstream):
+    cnames=resolver.query(domain,"CNAME")
+    if not any(r.target.to_text().rstrip(".") == cname for r in cnames): return False
+    remove_caddy(domain)
+    route_data = {
+        "match": [{"host": [domain]}],
+        "handle": [
+            {
+                "handler": "reverse_proxy",
+                "upstreams": [{"dial": upstream+":443"}],
+                "transport": {"protocol": "http", "tls": {}}
+            }
+        ]
+    }
+    requests.post(f"{caddy_api}/config/apps/http/servers/srv0/routes", json=route_data)
+
+    return True
+
+def remove_caddy(domain):
+    routes=requests.get(f"{caddy_api}/config/apps/http/servers/srv0/routes").json()
+    for i, route in enumerate(routes):
+        if domain in route['match'][0]['host']:
+            requests.delete(f"{caddy_api}/config/apps/http/servers/srv0/routes/{i}")
+            return
+
