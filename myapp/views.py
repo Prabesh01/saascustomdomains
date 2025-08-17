@@ -90,17 +90,20 @@ def login():
 def upstreams():
     if request.method == 'POST':
         domain = request.form['domain'].lower()
-        if Upstream.query.filter_by(domain=domain,user=g.user).first():
-            flash('Upstream already exists', 'error')
-        else:
-            new_upstream = Upstream(
-                user=g.user,
-                domain=domain,
-                secret=secrets.token_urlsafe(36)
-            )
-            db.session.add(new_upstream)
-            db.session.commit()
-            flash('Upstream added successfully', 'success')
+        try:
+            resolver.resolve(domain)
+            if Upstream.query.filter_by(domain=domain,user=g.user).first():
+                flash('Upstream already exists', 'error')
+            else:
+                new_upstream = Upstream(
+                    user=g.user,
+                    domain=domain,
+                    secret=secrets.token_urlsafe(36)
+                )
+                db.session.add(new_upstream)
+                db.session.commit()
+                flash('Upstream added successfully', 'success')
+        except:flash('Invalid upstream domain name provided', 'error')
 
     upstreams = g.user.upstreams
     return render_template('upstreams.html', upstreams=upstreams)
