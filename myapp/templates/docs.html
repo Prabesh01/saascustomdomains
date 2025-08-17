@@ -233,6 +233,12 @@ section.endpoint-card h4{
     <pre class="example">{'error': 'Domain is required','status':400}</pre>
     <p>Domain already exists in the upstream</p>
     <pre class="example">{'error': 'Domain already exists','status':409}</pre>
+    <p>Provided domain doesn't exist</p>
+    <pre class="example">{'error': 'Invalid Domain Name','status':400}</pre>
+    <p>Domain has no cname records set</p>
+    <pre class="example">{'error': 'No CNAME record found in the domain. Please add and try again','status':400}</pre>
+    <p>The required cname record to xxx.{{host}} is not set</p>
+    <pre class="example">{'error': 'Required CNAME is not set. Please try again later.','status':400}</pre>
 
   </section>
 
