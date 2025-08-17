@@ -7,6 +7,8 @@ import secrets
 import requests
 import os, json
 
+import re
+
 script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env_path = os.path.join(script_dir, '.env')
 
@@ -60,6 +62,10 @@ def login():
         return ('Unauthorized', 401, {
             'WWW-Authenticate': 'Basic realm="Login Required"'
         })
+    if not re.match("^[a-z][a-z0-9-]*[a-z0-9]$",request.authorization.username.lower()) or len(request.authorization.username)>50:
+           return ('Unauthorized', 401, {
+                'WWW-Authenticate': 'Basic realm="Invalid username!"'
+            })
 
     user = User.query.filter_by(username=request.authorization.username).first()
     if user:
@@ -71,7 +77,7 @@ def login():
                 'WWW-Authenticate': 'Basic realm="Invalid Password for the user!"'
             })
 
-    new_user = User(username=request.authorization.username, password='meh')
+    new_user = User(username=request.authorization.username.lower(), password='meh')
     new_user.set_password(request.authorization.password)
     db.session.add(new_user)
     db.session.commit()
