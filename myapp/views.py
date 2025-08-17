@@ -110,7 +110,11 @@ def upstreams():
 def delete_upstream(upstream_id):
     upstream = Upstream.query.filter_by(id=upstream_id, user=g.user).first_or_404()
 
+    domains = Domain.query.filter_by(upstream_id=upstream_id).all()
+    for domain in domains:
+        remove_caddy(domain.domain)
     Domain.query.filter_by(upstream_id=upstream_id).delete()
+
     db.session.delete(upstream)
     db.session.commit()
 
@@ -191,7 +195,7 @@ def add_caddy(cname, domain,upstream):
     except resolver.NXDOMAIN: return 'Invalid Domain Name'
     except: return "No CNAME record found in the domain. Please add and try again"
     if not any(r.target.to_text().rstrip(".") == cname for r in cnames): return "Required CNAME is not set. Please try again later."
-    remove_caddy(domain)
+    if Domain.query.filter_by(domain=domain).first(): remove_caddy(domain)
     route_data = {
         "match": [{"host": [domain]}],
         "handle": [
