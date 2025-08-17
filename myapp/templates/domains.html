@@ -12,15 +12,18 @@
         </p>
     </div>
 
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold">Associated Domains</h2>
+    <!-- Upstream Management Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-gray-700">Associated Domains</h2>
             <button onclick="toggleUpstreamForm()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
                 <i class="fas fa-plus mr-2"></i> Add Domain
             </button>
-    </div>
+        </div>
 
         <!-- Add Upstream Form (Initially Hidden) -->
 <div id="upstreamForm" class="hidden mb-6 bg-gray-50 p-4 rounded-md">
+    <form onsubmit="return addDomain(event)" class="space-y-4">
         <!-- Container for input and buttons side by side -->
         <div class="flex items-end space-x-4">
             <!-- Domain input -->
@@ -36,15 +39,16 @@
                     class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">
                     Cancel
                 </button>
-                <button onclick="addDomain()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
                     Add
                 </button>
             </div>
         </div>
+    </form>
 </div>
 
 
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -72,7 +76,9 @@
 
         // Reset form when showing
         if (!form.classList.contains('hidden')) {
-            document.getElementById('domain').value = '';
+            const inputField = document.getElementById('domain');
+            inputField.value = '';
+            inputField.focus();
         }
     }
 
@@ -117,13 +123,15 @@ function loadDomains() {
 }
 
 // Function to add a new domain
-function addDomain() {
+function addDomain(e) {
+    e.preventDefault();
+
     const domainInput = document.getElementById('domain');
     const domainName = domainInput.value.trim();
 
     if (!domainName) {
         alert('Please enter a domain name.');
-        return;
+        return false;
     }
 
     fetch(apiBaseUrl, {
@@ -144,6 +152,7 @@ function addDomain() {
         }
     })
     .catch(err => console.error('Error adding domain:', err));
+    return false;
 }
 
 // Function to delete a domain

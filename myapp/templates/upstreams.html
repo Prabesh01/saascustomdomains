@@ -94,10 +94,9 @@
         
         // Reset form when showing
         if (!form.classList.contains('hidden')) {
-            document.getElementById('upstreamAction').value = 'add';
-            document.getElementById('upstreamId').value = '';
-            document.getElementById('domain').value = '';
-            document.getElementById('secret').value = '';
+            const inputField = document.getElementById('domain');
+            inputField.value = '';
+            inputField.focus();
         }
     }
 
