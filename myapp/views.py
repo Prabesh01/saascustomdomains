@@ -204,7 +204,9 @@ def add_caddy(cname, domain,upstream):
     except resolver.NXDOMAIN: return 'Invalid Domain Name'
     except: return "No CNAME record found in the domain. Please add and try again"
     if not any(r.target.to_text().rstrip(".") == cname for r in cnames): return "Required CNAME is not set. Please try again later."
-    if Domain.query.filter_by(domain=domain).first(): remove_caddy(domain)
+    if Domain.query.filter_by(domain=domain).first():
+        remove_caddy(domain)
+        Domain.query.filter_by(domain=domain).delete()
     route_data = {
         "match": [{"host": [domain]}],
         "handle": [
