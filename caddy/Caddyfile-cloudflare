@@ -5,7 +5,9 @@
 
 
 saascustomdomains, *.saascustomdomains {
-        tls developer@saascustomdomains.com
+	tls {
+	dns cloudflare xxx
+	}
 
 	reverse_proxy {
 	to localhost:8282

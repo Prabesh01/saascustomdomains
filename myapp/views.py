@@ -79,10 +79,9 @@ def login():
 
     new_user = User(username=request.authorization.username.lower(), password='meh')
     new_user.set_password(request.authorization.password)
-    db.session.add(new_user)
-    db.session.commit()
 
-    r=requests.post(f"https://api.cloudflare.com/client/v4/zones/{os.getenv('cf_zone_id')}/dns_records", headers={"Authorization":f"Bearer {os.getenv('cf_api_key')}"}, json={"type":"CNAME","name":new_user.username,"content":request.host,"ttl": 3600,"proxied": False})
+    r=requests.post(f"https://api.name.com/v4/domains/{request.host}/records",json={"host":new_user.username,"type":"CNAME","answer":request.host,"ttl":300},auth=(os.getenv('name_com_api_username'),os.getenv('name_com_api_token')))
+    # r=requests.post(f"https://api.cloudflare.com/client/v4/zones/{os.getenv('cf_zone_id')}/dns_records", headers={"Authorization":f"Bearer {os.getenv('cf_api_key')}"}, json={"type":"CNAME","name":new_user.username,"content":request.host,"ttl": 3600,"proxied": False})
     if r.status_code==200:
         db.session.add(new_user)
         db.session.commit()
