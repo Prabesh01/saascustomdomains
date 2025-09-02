@@ -213,14 +213,14 @@ def add_caddy(cname, domain,upstream):
             {
                 "handler": "reverse_proxy",
                 "upstreams": [{"dial": upstream+":443"}],
-                # "transport": {"protocol": "http", "tls": {}}
+                "transport": {"protocol": "http", "tls": {}}, # "server_name": upstream,"insecure_skip_verify": False
+                "headers": {
+                    "request": {
+                        "set": {"Host": [upstream]}
+                    }
+                }
             }
-        ],
-        "headers": {
-            "requests": {
-                "set": {"Host": [upstream]}
-            }
-        }
+        ]
     }
     requests.post(f"{caddy_api}/config/apps/http/servers/srv0/routes", json=route_data)
 
