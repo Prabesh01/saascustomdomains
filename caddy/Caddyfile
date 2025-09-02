@@ -11,3 +11,7 @@ saascustomdomains, *.saascustomdomains {
 	to localhost:8282
 	}
 }
+
+:80, :443 {
+        respond "Domain not configured" 404
+}

@@ -224,13 +224,14 @@ def add_caddy(cname, domain,upstream):
             }
         ]
     }
-    requests.post(f"{caddy_api}/config/apps/http/servers/srv0/routes", json=route_data)
+    requests.put(f"{caddy_api}/config/apps/http/servers/srv0/routes/0", json=route_data)
 
     return False
 
 def remove_caddy(domain):
     routes=requests.get(f"{caddy_api}/config/apps/http/servers/srv0/routes").json()
     for i, route in enumerate(routes):
+        if not 'match' in route: continue
         if domain in route['match'][0]['host']:
             requests.delete(f"{caddy_api}/config/apps/http/servers/srv0/routes/{i}")
             return
