@@ -83,12 +83,15 @@ def login():
     db.session.commit()
 
     r=requests.post(f"https://api.cloudflare.com/client/v4/zones/{os.getenv('cf_zone_id')}/dns_records", headers={"Authorization":f"Bearer {os.getenv('cf_api_key')}"}, json={"type":"CNAME","name":new_user.username,"content":request.host,"ttl": 3600,"proxied": False})
-    if r.status_code!=200:
-        db.session.delete(new_user)
+    if r.status_code==200:
+        db.session.add(new_user)
         db.session.commit()
-    else: session["user"] = new_user.username
+        session["user"] = new_user.username
+        return redirect(url_for("views.upstreams"))
 
-    return redirect(url_for("views.upstreams"))
+    return ('Try again later', 500, {
+        'WWW-Authenticate': 'Basic realm="Failed to add dns record"'
+    })
 
 
 @views.route('/',methods=['GET', 'POST'])
