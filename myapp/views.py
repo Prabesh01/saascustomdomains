@@ -82,6 +82,7 @@ def login():
 
     r=requests.post(f"https://api.name.com/v4/domains/{request.host}/records",json={"host":new_user.username,"type":"CNAME","answer":request.host,"ttl":300},auth=(os.getenv('name_com_api_username'),os.getenv('name_com_api_token')))
     # r=requests.post(f"https://api.cloudflare.com/client/v4/zones/{os.getenv('cf_zone_id')}/dns_records", headers={"Authorization":f"Bearer {os.getenv('cf_api_key')}"}, json={"type":"CNAME","name":new_user.username,"content":request.host,"ttl": 3600,"proxied": False})
+    print(r.text)
     if r.status_code==200:
         db.session.add(new_user)
         db.session.commit()
